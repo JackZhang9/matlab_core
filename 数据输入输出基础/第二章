@@ -1,0 +1,429 @@
+# matlab系列文章目录
+
+第二章matlab学习入门之数据输入输出基础
+
+---
+
+
+在本章你会学到的知识：
+打开和关闭文件；
+读写二进制文件；
+读写文本文件；
+数据导入；
+@[TOC](文章目录)
+
+---
+
+# 前言
+
+在matlab中有很多文件输入输出i/o指令，你可以轻易地对二进制文件和asc2文件进行i/o操作，如打开，关闭，存储。
+
+---
+
+
+
+# 一、打开和关闭文件
+## 1.1打开文件
+matlab使用fopen('filepath','permission')来打开文件，如下：
+其中permission是对文件的打开方式，有r只读，w只写，r+读写，文件默认以二进制形式打开，若要求以文本形式打开，permission改为加上t,如rt+,
+
+```
+>> fid1=fopen('log.m','r')
+
+fid1 =
+
+     3
+
+>> fid2=fopen('ttt.m','r')
+
+fid2 =
+
+    -1
+
+>> 
+```
+可以判断文件是否正确打开，如下：
+[fid,message]=fopen('filename','r');
+if fid==-1
+disp(message);
+end
+实例如下：
+
+```
+>> [fid,message]=fopen('tan.m','r')
+
+fid =
+
+     6
+
+
+message =
+
+     ''
+
+
+>> 
+```
+## 1.2关闭文件
+关闭文件指令：
+status=fclose(fid)
+其中,fid为文件的标识，是打开文件的返回值，若关闭成功status返回0，否则返回-1。
+```
+>> [fid1,message]=fopen('log.m','r');
+>> [fid2,message]=fopen('exp.m','r');
+>> [fid3,message]=fopen('cos.m','r');
+>> status1=fclose(fid1);  %关闭之前打开的fid1文件
+>> status2=fclose(fid2);  %关闭之前打开的fid2文件
+>> status3=fclose(fid3);  %关闭之前打开的fid3文件
+>> status=[status1,status2,status3]
+
+status =
+
+     0     0     0
+
+>> 
+```
+也可以一次性关闭所有打开的文件：
+如下：
+
+```
+>> [fid1,message]=fopen('log.m','r');
+>> [fid2,message]=fopen('exp.m','r');
+>> [fid3,message]=fopen('cos.m','r');
+>> status=fclose('all')
+
+status =
+
+     0
+
+>> 
+```
+
+有时需要打开临时目录或临时文件，如下：
+
+```
+>> d=tempdir   %打开一个临时目录
+
+d =
+
+C:\Users\DELL\AppData\Local\Temp\
+
+>> filename=tempname  %打开一个临时文件
+
+filename =
+
+C:\Users\DELL\AppData\Local\Temp\tp1df71628_23d3_4833_afc7_4a059abd6c5b
+```
+
+# 二、读写二进制文件
+在matlab中，二进制文件包括*.bin和*.dat文件，有fwrite()函数写二进制文件，fread()函数读二进制文件，
+## 1.写二进制文件
+使用fwrite()函数，将一个矩阵用二进制格式写入打开的文件，返回成功写入的个数，格式为：
+count=fwrite(fid,a,precision)
+其中，fid是文件标识，a是矩阵，precision是写入的精度，如下：
+>代码如下（示例）：
+
+```
+>> [fid,message]=fopen('G:\matlab_practice\chap1\example.bin','w');
+>> [fid,message]=fopen('G:\matlab_practice\chap1\example.bin','w');  %创建一个example.bin的二进制文件
+>> count=fwrite(fid,magic(5),'int32');  %把magic(5)这个矩阵写入fid这个二进制文件中，并以int32精度保存
+>> status=fclose(fid)  %关闭fid这个文件
+
+status =
+
+     0
+
+>> 
+```
+经过上面操作，example.bin文件中保存了25个int32的整数，并且是一个5*5的方阵，那么怎么查看呢？
+使用如下操作：
+
+```
+>> [fid,message]=fopen('G:\matlab_practice\chap1\example.bin','w');
+>> [fid,message]=fopen('G:\matlab_practice\chap1\example.bin','w');  %创建一个example.bin的二进制文件
+>> count=fwrite(fid,magic(5),'int32');  %把magic(5)这个矩阵写入fid这个二进制文件中，并以int32精度保存
+>> status=fclose(fid)  %关闭fid这个文件
+
+status =
+
+     0
+
+>> count
+
+count =
+
+    25
+
+>> fid1=fopen('G:\matlab_practice\chap1\example.bin','r');
+>> fid1=fopen('G:\matlab_practice\chap1\example.bin','r');   %读example.bin这个二进制文件，并以只读模式打开
+>> a=fread(fid1,count,'int32')
+
+a =
+
+    17
+    23
+     4
+    10
+    11
+    24
+     5
+     6
+    12
+    18
+     1
+     7
+    13
+    19
+    25
+     8
+    14
+    20
+    21
+     2
+    15
+    16
+    22
+     3
+     9
+
+>> % 看到二进制逆运算后，变成了一个1维的矩阵，需要reshape转换矩阵形状
+>> data=reshape(a,5,5)   %a是需要转换形状的矩阵，后面是形状，5行5列
+
+data =
+
+    17    24     1     8    15
+    23     5     7    14    16
+     4     6    13    20    22
+    10    12    19    21     3
+    11    18    25     2     9
+
+>> fclose(fid)
+
+ans =
+
+     0
+
+>> 
+```
+
+
+## 2.读二进制文件
+读二进制文件，使用fread()函数。在上个小节中，就用到了fread()函数去读取了打开的二进制文件，将其逆转录为一个一维矩阵。
+
+代码如下（示例）：
+
+```
+>> a=1:5
+
+a =
+
+     1     2     3     4     5
+
+>> b=[0.88,15.24,1555.00,1506.20,2556.68];
+>> figure(1);
+>> plot(a,b)
+>> 
+```
+![figure1](https://img-blog.csdnimg.cn/247efe8ab3c546f9941f20c0c032088c.png#pic_center)
+使用figure建立一张画布，使用plot画出图像，得到一张figure的图片。
+
+如下：
+
+```
+>> fid=fopen('G:\matlab_practice\chap1\ee.m','r');
+>> data=fread(fid);
+>> data
+
+data =
+
+     1
+     0
+     0
+     0
+     2
+     0
+     0
+     0
+     3
+     0
+     0
+     0
+     4
+     0
+     0
+     0
+     5
+     0
+     0
+     0
+     1
+     0
+     0
+     0
+    15
+     0
+     0
+     0
+    19
+     6
+     0
+     0
+   226
+     5
+     0
+     0
+   253
+     9
+     0
+     0
+
+>> figure(1);
+>> plot(data)
+>> disp(data)
+     1
+     0
+     0
+     0
+     2
+     0
+     0
+     0
+     3
+     0
+     0
+     0
+     4
+     0
+     0
+     0
+     5
+     0
+     0
+     0
+     1
+     0
+     0
+     0
+    15
+     0
+     0
+     0
+    19
+     6
+     0
+     0
+   226
+     5
+     0
+     0
+   253
+     9
+     0
+     0
+
+>> 
+```
+
+# 三、读写文本文件
+在matlab中，读写文本文件，fprintf,fgetl,fgets;
+## 3.1写文本文件
+使用fprintf()函数将数据写入文本文件，格式如下:
+count=fprintf(fid,format,y);
+其中：fid是要写入的文件，format是写入文件的格式，y是matlab的数据，count是成功写入的数据个数，常用格式%f 浮点数，实例如下：
+
+```
+>> x=0:0.25:1  %创建数据
+
+x =
+
+         0    0.2500    0.5000    0.7500    1.0000
+>> y=[x,sin(x)]
+
+y =
+
+         0    0.2500    0.5000    0.7500    1.0000         0    0.2474    0.4794    0.6816    0.8415
+>> fid=fopen('G:\matlab_practice\chap1\table.txt','w')  %创建一个table.txt文件
+
+fid =
+
+     3
+>> fprintf(fid,'x  sinx\n')  %写入首行x sin
+
+ans =
+
+     8
+>> fprintf(fid,'%f %f\n',y)  %写入矩阵x sin两列
+
+ans =
+
+    90
+>> fclose(fid)  %关闭文件
+
+ans =
+
+     0
+
+>> type G:\matlab_practice\chap1\table.txt   %查看table.txt数据
+
+x  sinx
+0.000000 0.250000
+0.500000 0.750000
+1.000000 0.000000
+0.247404 0.479426
+0.681639 0.841471
+>> 
+```
+注意：使用type可以查看文本文件。如txt文件，csv文件，
+注意：文件要使用绝对路径。
+警告：sprintf将数据以字符串形式返回，不写入文件。
+
+## 3.2读文本文件
+前面说了可以用type *.txt或type *.csv查看数据，但是这也只能查看，不能对数据进行任何操作，若想要对数据进行操作，还需要真正的将数据加载进内存中，那么怎么将文件数据读取到内存中呢？在matlab中，有fgetl()和fgets()两个函数进行文本文件的读取，格式如：
+tline=fgetl(fid);
+tline=fgets(fid);
+两个函数都是从文件中读取一行数据，fgetl去掉换行符，fgets保留换行符，
+如下所示，fgets保留了换行符，size相较于fgetl大1：
+```
+>> fid=fopen('fgetl.m');
+>> t=fgetl(fid)
+
+t =
+
+function tline = fgetl(fid)
+
+>> fclose(fid);
+>> fid=fopen('fgetl.m');
+>> t2=fgets(fid)
+
+t2 =
+
+function tline = fgetl(fid)
+
+
+>> fclose(fid);
+>> whos t t2
+  Name      Size            Bytes  Class    Attributes
+
+  t         1x27               54  char               
+  t2        1x28               56  char               
+
+>> 
+```
+
+## 3.3
+
+
+# 四、数据导入
+在matlab中，可使用向导或命令将外部的数据文件导入到matlab工作区，然后进行分析和处理，
+## 4.1向导导入数据
+步骤，
+1.在主页标签下，选择导入数据，弹出窗口，然后选择要打开的数据文件，
+2.打开数据文件，点击导入所选内容
+即可在工作区看见导入的数据
+##  4.2命令导入数据
+过于繁琐，个人觉得不应该把时间花在导入数据上，推荐使用第一种数据导入方法。
+
+---
+
+# 总结
+这一章主要介绍了在matlab中数据输入和输出操作，如何去打开文件，和关闭文件，如何创建一个文件，读写二进制和文本文件，如何导入数据文件。
